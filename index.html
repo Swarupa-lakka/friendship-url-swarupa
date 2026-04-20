@@ -1040,6 +1040,9 @@
 			/** @typedef {{id: string, kind: 'image'|'video', name: string, size: number, type: string, url: string, file?: File, style?: 'glass'|'neon'|'pastel'|'paper'}} MediaItem */
 			/** @typedef {{kind?: 'image'|'video', name?: string, url: string, type?: string}} HostedMediaItem */
 
+			const DEFAULT_MUSIC_URL = encodeURI('gallery/neeta-unte-nuvvu-to-un_esGD5RJ3 (1).mp3.mpeg');
+			const DEFAULT_MUSIC_NAME = 'Background Music';
+
 			const state = {
 				/** @type {MediaItem[]} */
 				items: [],
@@ -1072,6 +1075,8 @@
 					name: '',
 					volume: 0.6,
 					objectUrl: null,
+					defaultUrl: DEFAULT_MUSIC_URL,
+					defaultName: DEFAULT_MUSIC_NAME,
 				},
 			};
 
@@ -1880,7 +1885,7 @@
 
 			function setMusicFromFile(file) {
 				if (!file) return;
-				if (state.music.objectUrl) URL.revokeObjectURL(state.music.objectUrl);
+				if (state.music.objectUrl) safeRevoke(state.music.objectUrl);
 				const url = URL.createObjectURL(file);
 				state.music.objectUrl = url;
 				state.music.enabled = true;
@@ -1889,6 +1894,42 @@
 				el.bgAudio.loop = true;
 				el.bgAudio.volume = Math.max(0, Math.min(1, state.music.volume || 0.6));
 				updateMusicUi();
+			}
+
+			function setMusicFromUrl(url, name = 'Music') {
+				if (!url) return;
+				if (state.music.objectUrl) safeRevoke(state.music.objectUrl);
+				state.music.objectUrl = url;
+				state.music.enabled = true;
+				state.music.name = name || 'Music';
+				el.bgAudio.src = url;
+				el.bgAudio.loop = true;
+				el.bgAudio.volume = Math.max(0, Math.min(1, state.music.volume || 0.6));
+				updateMusicUi();
+			}
+
+			async function loadDefaultMusicIfPresent() {
+				const url = state.music.defaultUrl;
+				if (!url) return;
+				if (state.music.objectUrl) return; // don't override user-selected music
+				try {
+					// Try HEAD first (fast); fallback to a tiny ranged GET.
+					let ok = false;
+					try {
+						const head = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+						ok = Boolean(head && head.ok);
+					} catch {
+						ok = false;
+					}
+					if (!ok) {
+						const res = await fetch(url, { method: 'GET', headers: { Range: 'bytes=0-0' }, cache: 'no-store' });
+						ok = Boolean(res && (res.ok || res.status === 206));
+					}
+					if (!ok) return;
+					setMusicFromUrl(url, state.music.defaultName || 'Music');
+				} catch {
+					// ignore
+				}
 			}
 
 			function tryPlayMusic() {
@@ -2243,6 +2284,7 @@
 			// Show a friendlier first-load message while we try to auto-load hosted photos.
 			if (el.empty) el.empty.textContent = 'Loading your gallery…';
 			render();
+			loadDefaultMusicIfPresent();
 			loadDefaultGalleryJson().finally(() => {
 				if (state.items.length === 0 && el.empty) {
 					el.empty.textContent = 'No media yet. Add photos/videos to start building your gallery.';
