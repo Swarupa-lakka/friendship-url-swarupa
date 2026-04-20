@@ -34,7 +34,7 @@ git commit -m "Initial commit"
 
 git branch -M main
 
-git remote add origin https://github.com/swarupa-1715/url_friendship_swarupa.git
+git remote add origin https://github.com/Swarupa-lakka/friendship-url-swarupa.git
 
 git push -u origin main
 ```
@@ -46,10 +46,10 @@ On GitHub:
 - Branch: **main** / **(root)** → Save
 
 Your site URL becomes:
-`https://swarupa-1715.github.io/url_friendship_swarupa/`
+`https://Swarupa-lakka.github.io/friendship-url-swarupa/`
 
 ## If you see 404 (common fixes)
-- Make sure you are opening the **GitHub Pages** URL (starts with `https://swarupa-1715.github.io/...`), not the `github.com/...` file view.
+- Make sure you are opening the **GitHub Pages** URL (starts with `https://Swarupa-lakka.github.io/...`), not the `github.com/...` file view.
 - In **Settings → Pages**, ensure:
   - Source = **Deploy from a branch**
   - Branch = **main**
