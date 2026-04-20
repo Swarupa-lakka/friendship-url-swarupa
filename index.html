@@ -1077,6 +1077,8 @@
 					objectUrl: null,
 					defaultUrl: DEFAULT_MUSIC_URL,
 					defaultName: DEFAULT_MUSIC_NAME,
+					autoplayBlocked: false,
+					gestureArmed: false,
 				},
 			};
 
@@ -1877,7 +1879,14 @@
 				const isPlaying = hasTrack && !el.bgAudio.paused;
 				if (el.musicToggleBtn) {
 					el.musicToggleBtn.disabled = !hasTrack;
-					el.musicToggleBtn.textContent = !hasTrack ? 'Music Off' : isPlaying ? 'Music On' : 'Music Paused';
+					el.musicToggleBtn.textContent =
+						!hasTrack
+							? 'Music Off'
+							: isPlaying
+								? 'Music On'
+								: state.music.autoplayBlocked
+									? 'Music (Tap to start)'
+									: 'Music Paused';
 					el.musicToggleBtn.setAttribute('aria-pressed', String(isPlaying));
 				}
 				if (el.musicVol) el.musicVol.disabled = !hasTrack;
@@ -1893,7 +1902,19 @@
 				el.bgAudio.src = url;
 				el.bgAudio.loop = true;
 				el.bgAudio.volume = Math.max(0, Math.min(1, state.music.volume || 0.6));
+				state.music.autoplayBlocked = false;
 				updateMusicUi();
+			}
+
+			function armMusicAutoplayFallback() {
+				if (state.music.gestureArmed) return;
+				state.music.gestureArmed = true;
+				const handler = () => {
+					// After a user gesture, autoplay should be allowed.
+					tryPlayMusic();
+				};
+				window.addEventListener('pointerdown', handler, { capture: true, once: true });
+				window.addEventListener('keydown', handler, { capture: true, once: true });
 			}
 
 			function setMusicFromUrl(url, name = 'Music') {
@@ -1905,6 +1926,7 @@
 				el.bgAudio.src = url;
 				el.bgAudio.loop = true;
 				el.bgAudio.volume = Math.max(0, Math.min(1, state.music.volume || 0.6));
+				state.music.autoplayBlocked = false;
 				updateMusicUi();
 			}
 
@@ -1927,6 +1949,8 @@
 					}
 					if (!ok) return;
 					setMusicFromUrl(url, state.music.defaultName || 'Music');
+					// Try to autoplay immediately; if blocked, start on first tap/keypress.
+					tryPlayMusic();
 				} catch {
 					// ignore
 				}
@@ -1938,6 +1962,8 @@
 				el.bgAudio.volume = Math.max(0, Math.min(1, state.music.volume || 0.6));
 				el.bgAudio.play().then(updateMusicUi).catch(() => {
 					// Autoplay can be blocked until a user gesture.
+					state.music.autoplayBlocked = true;
+					armMusicAutoplayFallback();
 					updateMusicUi();
 				});
 			}
