@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>QR — Swarupa Gallery</title>
+		<meta name="description" content="Scan this QR to open the gallery." />
+		<style>
+			:root {
+				--bg0: #060814;
+				--bg: #0b1020;
+				--panel: rgba(255, 255, 255, 0.07);
+				--text: rgba(255, 255, 255, 0.92);
+				--muted: rgba(255, 255, 255, 0.70);
+				--border: rgba(255, 255, 255, 0.16);
+				--shadow: 0 20px 70px rgba(0, 0, 0, 0.55);
+				--radius: 18px;
+				--ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+			}
+			* { box-sizing: border-box; }
+			html, body { height: 100%; }
+			body {
+				margin: 0;
+				color: var(--text);
+				background:
+					radial-gradient(900px 450px at 18% 14%, rgba(139, 92, 246, 0.26), transparent 60%),
+					radial-gradient(980px 520px at 84% 18%, rgba(34, 197, 94, 0.18), transparent 60%),
+					radial-gradient(900px 520px at 50% 96%, rgba(14, 165, 233, 0.14), transparent 60%),
+					linear-gradient(180deg, var(--bg0) 0%, var(--bg) 100%);
+				font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+			}
+			.wrap {
+				width: min(720px, calc(100% - 32px));
+				margin: 0 auto;
+				padding: 28px 0 44px;
+			}
+			.card {
+				border: 1px solid var(--border);
+				background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+				border-radius: var(--radius);
+				box-shadow: var(--shadow);
+				padding: 16px;
+				backdrop-filter: blur(14px);
+			}
+			h1 { margin: 0 0 8px; font-size: 22px; }
+			p { margin: 0 0 12px; color: var(--muted); }
+			.row {
+				display: grid;
+				grid-template-columns: 320px 1fr;
+				gap: 16px;
+				align-items: start;
+			}
+			@media (max-width: 720px) {
+				.row { grid-template-columns: 1fr; }
+			}
+			.input {
+				width: 100%;
+				border: 1px solid rgba(255,255,255,0.18);
+				background: rgba(255,255,255,0.06);
+				color: var(--text);
+				border-radius: 12px;
+				padding: 10px 12px;
+				outline: none;
+			}
+			.input:focus { box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.20); border-color: rgba(139, 92, 246, 0.70); }
+			.small { font-size: 13px; color: var(--muted); }
+			.status { margin-top: 10px; font-size: 13px; color: var(--muted); }
+			.qr {
+				width: 320px;
+				height: 320px;
+				border-radius: 16px;
+				border: 1px solid rgba(255,255,255,0.18);
+				background: rgba(0,0,0,0.25);
+				display: grid;
+				place-items: center;
+				overflow: hidden;
+			}
+			.qr img { width: 100%; height: 100%; object-fit: cover; }
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
+				padding: 10px 12px;
+				border-radius: 12px;
+				border: 1px solid rgba(255,255,255,0.18);
+				background: rgba(255,255,255,0.06);
+				color: var(--text);
+				cursor: pointer;
+				transition: transform 180ms var(--ease), background 180ms var(--ease);
+			}
+			.btn:hover { background: rgba(255,255,255,0.09); }
+			.btn:active { transform: translateY(1px); }
+			.code {
+				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				font-size: 13px;
+				background: rgba(0,0,0,0.35);
+				border: 1px solid rgba(255,255,255,0.14);
+				border-radius: 12px;
+				padding: 10px 12px;
+				word-break: break-all;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="wrap">
+			<div class="card">
+				<h1>Scan to open Swarupa’s Gallery</h1>
+				<p>After you enable GitHub Pages, this QR opens your site and your photos will load automatically from <b>gallery.json</b>.</p>
+				<div class="row">
+					<div class="qr" aria-label="QR code">
+						<img id="qrImg" alt="QR" />
+					</div>
+					<div>
+						<label class="small" for="urlInput">Pages link (edit if needed)</label>
+						<input class="input" id="urlInput" type="url" spellcheck="false" />
+						<div class="status" id="statusText"></div>
+						<div class="code" id="linkText" style="margin-top: 10px;"></div>
+						<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+							<button class="btn" id="copyBtn" type="button">Copy link</button>
+							<button class="btn" id="regenBtn" type="button">Update QR</button>
+							<a class="btn" id="openBtn" href="#" target="_blank" rel="noreferrer">Open</a>
+						</div>
+						<p style="margin-top:12px;">If you get a 404, check GitHub → Repo → Settings → Pages and copy the exact URL shown there into the box above.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			const FALLBACK_URL = 'https://swarupa-1715.github.io/url_friendship_swarupa/';
+			const qrApi = (data) => `https://api.qrserver.com/v1/create-qr-code/?size=720x720&format=png&margin=12&data=${encodeURIComponent(data)}`;
+
+			function guessPagesUrl() {
+				// If this page is already hosted on GitHub Pages, derive the base URL.
+				try {
+					if (location.protocol === 'https:' && location.hostname.endsWith('.github.io')) {
+						return new URL('./', location.href).href;
+					}
+				} catch {
+					// ignore
+				}
+				return FALLBACK_URL;
+			}
+
+			function normalizeUrl(url) {
+				let u = String(url || '').trim();
+				if (!u) return '';
+				if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+				try {
+					const parsed = new URL(u);
+					// GitHub Pages for project sites should end with '/'
+					if (!parsed.pathname.endsWith('/')) parsed.pathname += '/';
+					return parsed.href;
+				} catch {
+					return u;
+			}
+			}
+
+			async function checkUrl(url) {
+				const statusEl = document.getElementById('statusText');
+				statusEl.textContent = 'Checking link…';
+				try {
+					// no-cors avoids hard failures on some cross-origin setups.
+					await fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' });
+					statusEl.textContent = 'If this still shows 404 in browser, GitHub Pages may not be enabled yet (or needs 1–5 minutes to deploy).';
+				} catch {
+					statusEl.textContent = 'Could not check (maybe offline). Still OK to use the link.';
+				}
+			}
+
+			function renderQr(url) {
+				const normalized = normalizeUrl(url);
+				const linkText = document.getElementById('linkText');
+				const openBtn = document.getElementById('openBtn');
+				const img = document.getElementById('qrImg');
+				linkText.textContent = normalized;
+				openBtn.href = normalized;
+				img.src = qrApi(normalized);
+				checkUrl(normalized);
+				return normalized;
+			}
+
+			const urlInput = document.getElementById('urlInput');
+			urlInput.value = guessPagesUrl();
+			renderQr(urlInput.value);
+
+			document.getElementById('regenBtn').addEventListener('click', () => {
+				renderQr(urlInput.value);
+			});
+			urlInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') renderQr(urlInput.value);
+			});
+
+			document.getElementById('copyBtn').addEventListener('click', async () => {
+				try {
+					const current = renderQr(urlInput.value);
+					await navigator.clipboard.writeText(current);
+					const btn = document.getElementById('copyBtn');
+					btn.textContent = 'Copied!';
+					setTimeout(() => (btn.textContent = 'Copy link'), 1200);
+				} catch {
+					alert('Copy failed. Please copy manually.');
+				}
+			});
+		</script>
+	</body>
+</html>

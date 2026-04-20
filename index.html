@@ -1,0 +1,2253 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Media Gallery</title>
+		<meta name="description" content="A simple website to view photos and videos in one place." />
+		<style>
+			:root {
+				--bg0: #060814;
+				--bg: #0b1020;
+				--panel: rgba(255, 255, 255, 0.065);
+				--panel-2: rgba(255, 255, 255, 0.105);
+				--text: rgba(255, 255, 255, 0.92);
+				--muted: rgba(255, 255, 255, 0.70);
+				--border: rgba(255, 255, 255, 0.14);
+				--border-strong: rgba(255, 255, 255, 0.20);
+				--shadow: 0 20px 70px rgba(0, 0, 0, 0.55);
+				--shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.35);
+				--accent: #8b5cf6;
+				--accent-2: #22c55e;
+				--accent-3: #0ea5e9;
+				--danger: #ef4444;
+				--ring: 0 0 0 4px rgba(139, 92, 246, 0.20);
+				--radius: 18px;
+				--radius-sm: 12px;
+				--blur: 14px;
+				--ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+			}
+
+			* { box-sizing: border-box; }
+			html, body { height: 100%; }
+			html { color-scheme: dark; }
+			body {
+				margin: 0;
+				color: var(--text);
+				background:
+					radial-gradient(900px 450px at 18% 14%, rgba(139, 92, 246, 0.26), transparent 60%),
+					radial-gradient(980px 520px at 84% 18%, rgba(34, 197, 94, 0.18), transparent 60%),
+					radial-gradient(900px 520px at 50% 96%, rgba(14, 165, 233, 0.14), transparent 60%),
+					linear-gradient(180deg, var(--bg0) 0%, var(--bg) 100%);
+				font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable", "Segoe UI", Roboto, Helvetica, Arial,
+					"Apple Color Emoji", "Segoe UI Emoji";
+				letter-spacing: 0.1px;
+				text-rendering: geometricPrecision;
+				-webkit-font-smoothing: antialiased;
+				overflow-x: hidden;
+				position: relative;
+			}
+
+			body::before {
+				content: "";
+				position: fixed;
+				inset: -200px;
+				pointer-events: none;
+				background:
+					radial-gradient(closest-side at 20% 20%, rgba(139, 92, 246, 0.22), transparent 70%),
+					radial-gradient(closest-side at 85% 25%, rgba(34, 197, 94, 0.16), transparent 72%),
+					radial-gradient(closest-side at 55% 85%, rgba(14, 165, 233, 0.14), transparent 72%);
+				filter: blur(18px);
+				opacity: 0.75;
+				transform: translateZ(0);
+				animation: bgFloat 16s var(--ease) infinite alternate;
+				z-index: -1;
+			}
+
+			@keyframes bgFloat {
+				from { transform: translate3d(0, 0, 0) scale(1); }
+				to { transform: translate3d(0, -18px, 0) scale(1.02); }
+			}
+
+			a { color: inherit; }
+
+			.wrap {
+				width: min(1140px, calc(100% - 32px));
+				margin: 0 auto;
+				padding: 26px 0 44px;
+			}
+
+			header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 16px;
+				margin-bottom: 16px;
+				padding: 14px 14px;
+				border: 1px solid var(--border);
+				background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.045));
+				border-radius: var(--radius);
+				box-shadow: var(--shadow-soft);
+				backdrop-filter: blur(var(--blur));
+			}
+
+			.title h1 {
+				margin: 0;
+				font-size: 24px;
+				letter-spacing: 0.2px;
+				line-height: 1.15;
+				background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(139,92,246,0.95), rgba(34,197,94,0.90));
+				-webkit-background-clip: text;
+				background-clip: text;
+				color: transparent;
+			}
+
+			.title p {
+				margin: 6px 0 0;
+				color: var(--muted);
+				max-width: 62ch;
+			}
+
+			.bar {
+				display: grid;
+				grid-template-columns: 1fr auto;
+				gap: 12px;
+				align-items: center;
+				margin: 12px 0 14px;
+				padding: 12px;
+				border: 1px solid var(--border);
+				background: rgba(255, 255, 255, 0.055);
+				border-radius: var(--radius);
+				box-shadow: var(--shadow-soft);
+				backdrop-filter: blur(var(--blur));
+			}
+
+			.controls {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 10px;
+				align-items: center;
+				justify-content: flex-end;
+			}
+
+			.pill-row {
+				display: flex;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+
+			.pill {
+				appearance: none;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(255, 255, 255, 0.06);
+				color: var(--text);
+				padding: 8px 11px;
+				border-radius: 999px;
+				cursor: pointer;
+				user-select: none;
+				transition: background 180ms var(--ease), border-color 180ms var(--ease), transform 180ms var(--ease), box-shadow 180ms var(--ease);
+				box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+			}
+
+			::selection { background: rgba(139, 92, 246, 0.35); }
+
+			.pill:hover { background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 255, 255, 0.22); }
+			.pill:active { transform: translateY(1px); }
+			.pill:focus-visible { outline: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--ring); }
+			.pill[aria-pressed="true"] {
+				border-color: rgba(139, 92, 246, 0.85);
+				background: linear-gradient(180deg, rgba(139, 92, 246, 0.24), rgba(139, 92, 246, 0.14));
+			}
+
+			.btn {
+				appearance: none;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(255, 255, 255, 0.06);
+				color: var(--text);
+				padding: 9px 12px;
+				border-radius: var(--radius-sm);
+				cursor: pointer;
+				transition: background 180ms var(--ease), border-color 180ms var(--ease), transform 180ms var(--ease), box-shadow 180ms var(--ease);
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+			}
+			.btn:hover { background: rgba(255, 255, 255, 0.095); border-color: rgba(255, 255, 255, 0.24); }
+			.btn:active { transform: translateY(1px); }
+			.btn:focus-visible { outline: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--ring); }
+
+			.btn.primary {
+				border-color: rgba(139, 92, 246, 0.70);
+				background: linear-gradient(180deg, rgba(139, 92, 246, 0.26), rgba(139, 92, 246, 0.14));
+			}
+			.btn.primary:hover { background: linear-gradient(180deg, rgba(139, 92, 246, 0.34), rgba(139, 92, 246, 0.16)); }
+
+			.btn.danger {
+				border-color: rgba(239, 68, 68, 0.55);
+				background: rgba(239, 68, 68, 0.12);
+			}
+			.btn.danger:hover { background: rgba(239, 68, 68, 0.18); }
+
+			.select {
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(255, 255, 255, 0.055);
+				color: var(--text);
+				border-radius: var(--radius-sm);
+				padding: 9px 10px;
+				outline: none;
+				transition: border-color 180ms var(--ease), background 180ms var(--ease), box-shadow 180ms var(--ease);
+			}
+			.select:focus { border-color: rgba(139, 92, 246, 0.75); box-shadow: var(--ring); }
+			.select:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+			}
+
+			.range {
+				accent-color: var(--accent);
+				height: 34px;
+				margin: 0;
+				width: 110px;
+			}
+			.range:disabled { opacity: 0.6; cursor: not-allowed; }
+
+			.search {
+				width: 100%;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				border-radius: var(--radius-sm);
+				padding: 10px 12px;
+				background: rgba(255, 255, 255, 0.055);
+				color: var(--text);
+				outline: none;
+				transition: border-color 180ms var(--ease), background 180ms var(--ease), box-shadow 180ms var(--ease);
+			}
+			.search::placeholder { color: rgba(255, 255, 255, 0.5); }
+			.search:focus { border-color: rgba(139, 92, 246, 0.75); box-shadow: var(--ring); }
+
+			.drop {
+				position: relative;
+				overflow: hidden;
+				border: 1px dashed rgba(255, 255, 255, 0.28);
+				background:
+					radial-gradient(800px 300px at 18% 10%, rgba(139, 92, 246, 0.12), transparent 60%),
+					radial-gradient(800px 300px at 85% 0%, rgba(34, 197, 94, 0.10), transparent 60%),
+					linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.035));
+				border-radius: var(--radius);
+				padding: 16px;
+				box-shadow: var(--shadow);
+				backdrop-filter: blur(var(--blur));
+			}
+
+			.drop::before {
+				content: "";
+				position: absolute;
+				inset: -2px;
+				background: linear-gradient(135deg, rgba(139, 92, 246, 0.45), rgba(34, 197, 94, 0.32), rgba(14, 165, 233, 0.30));
+				opacity: 0.22;
+				filter: blur(14px);
+				pointer-events: none;
+			}
+			.drop.drag {
+				border-color: rgba(34, 197, 94, 0.8);
+				background: linear-gradient(180deg, rgba(34, 197, 94, 0.11), rgba(255, 255, 255, 0.03));
+			}
+
+			.drop-row {
+				display: flex;
+				gap: 12px;
+				flex-wrap: wrap;
+				align-items: center;
+				justify-content: space-between;
+			}
+
+			.hint {
+				color: var(--muted);
+				font-size: 13px;
+			}
+
+			.grid {
+				margin-top: 14px;
+				display: grid;
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+				gap: 14px;
+			}
+
+			.grid.masonry {
+				display: block;
+				columns: 4 220px;
+				column-gap: 12px;
+			}
+			.grid.masonry .card {
+				display: inline-block;
+				width: 100%;
+				margin: 0 0 12px;
+			}
+
+			.grid.pattern {
+				display: grid;
+				grid-template-columns: repeat(12, minmax(0, 1fr));
+				gap: 12px;
+				align-items: stretch;
+			}
+			.grid.pattern .card {
+				min-height: 140px;
+			}
+
+			@media (max-width: 720px) {
+				.grid.pattern { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+			}
+			@media (max-width: 420px) {
+				.grid.pattern { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			}
+
+			@media (max-width: 980px) {
+				.grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+			}
+			@media (max-width: 720px) {
+				header { flex-direction: column; }
+				.bar { grid-template-columns: 1fr; }
+				.controls { justify-content: flex-start; }
+				.grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			}
+			@media (max-width: 420px) {
+				.grid { grid-template-columns: 1fr; }
+			}
+
+			.card {
+				position: relative;
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				background: rgba(0, 0, 0, 0.22);
+				border-radius: 14px;
+				overflow: hidden;
+				cursor: pointer;
+				min-height: 160px;
+				transform: translateZ(0);
+				transition: transform 200ms var(--ease), box-shadow 200ms var(--ease), border-color 200ms var(--ease), filter 200ms var(--ease);
+			}
+
+			@media (hover: hover) {
+				.card:hover {
+					transform: translateY(-3px);
+					box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55);
+					border-color: rgba(255, 255, 255, 0.20);
+				}
+				.card:hover .thumb { transform: scale(1.03); }
+			}
+
+			.card[data-style="glass"] {
+				border-color: rgba(255, 255, 255, 0.16);
+				background: rgba(255, 255, 255, 0.06);
+			}
+			.card[data-style="neon"] {
+				border-color: rgba(139, 92, 246, 0.45);
+				box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.22), 0 18px 50px rgba(139, 92, 246, 0.12);
+			}
+			.card[data-style="pastel"] {
+				border-color: rgba(255, 255, 255, 0.14);
+				background:
+					radial-gradient(600px 240px at 20% 10%, rgba(34, 197, 94, 0.14), transparent 55%),
+					radial-gradient(600px 240px at 80% 0%, rgba(139, 92, 246, 0.16), transparent 55%),
+					rgba(0, 0, 0, 0.20);
+			}
+			.card[data-style="paper"] {
+				border-color: rgba(255, 255, 255, 0.16);
+				background: rgba(255, 255, 255, 0.06);
+				transform: rotate(-0.35deg);
+			}
+			.card[data-style="paper"]:hover { transform: rotate(0deg); }
+
+			.frame {
+				position: absolute;
+				inset: 0;
+				padding: 1px;
+				border-radius: 14px;
+				background:
+					linear-gradient(135deg, rgba(139, 92, 246, 0.65), rgba(34, 197, 94, 0.55), rgba(14, 165, 233, 0.55));
+			}
+			.frame-inner {
+				position: absolute;
+				inset: 1px;
+				border-radius: 13px;
+				overflow: hidden;
+				background: rgba(0, 0, 0, 0.25);
+			}
+			.card[data-style="glass"] .frame {
+				background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(139, 92, 246, 0.55), rgba(34, 197, 94, 0.35));
+			}
+			.card[data-style="neon"] .frame {
+				background: linear-gradient(135deg, rgba(139, 92, 246, 0.95), rgba(14, 165, 233, 0.85));
+			}
+			.card[data-style="pastel"] .frame {
+				background: linear-gradient(135deg, rgba(253, 186, 116, 0.75), rgba(167, 139, 250, 0.75), rgba(110, 231, 183, 0.75));
+			}
+			.card[data-style="paper"] .frame {
+				background: linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(139, 92, 246, 0.35));
+			}
+
+			.thumb {
+				position: absolute;
+				inset: 0;
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				filter: saturate(1.05);
+				transform: scale(1.0);
+				transition: transform 320ms var(--ease), filter 320ms var(--ease);
+			}
+
+			.card::after {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background: linear-gradient(180deg, transparent 35%, rgba(0, 0, 0, 0.72) 100%);
+				pointer-events: none;
+			}
+
+			.meta {
+				position: absolute;
+				left: 10px;
+				right: 10px;
+				bottom: 10px;
+				display: grid;
+				gap: 4px;
+				z-index: 1;
+			}
+
+			.card[data-style="paper"] .meta {
+				left: 12px;
+				right: 12px;
+				bottom: 12px;
+			}
+
+			.name {
+				font-weight: 600;
+				font-size: 13px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.sub {
+				color: rgba(255, 255, 255, 0.72);
+				font-size: 12px;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 10px;
+			}
+
+			.badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				border: 1px solid rgba(255, 255, 255, 0.18);
+				background: rgba(255, 255, 255, 0.08);
+				padding: 3px 8px;
+				border-radius: 999px;
+			}
+
+			.x {
+				position: absolute;
+				right: 8px;
+				top: 8px;
+				z-index: 2;
+				border: 1px solid rgba(255, 255, 255, 0.22);
+				background: rgba(0, 0, 0, 0.40);
+				color: rgba(255, 255, 255, 0.9);
+				border-radius: 10px;
+				padding: 6px 8px;
+				cursor: pointer;
+				backdrop-filter: blur(10px);
+				transition: transform 180ms var(--ease), background 180ms var(--ease), border-color 180ms var(--ease);
+			}
+
+			.card[data-style="paper"] .x {
+				background: rgba(0, 0, 0, 0.45);
+			}
+
+			.x:hover { background: rgba(0, 0, 0, 0.55); border-color: rgba(255, 255, 255, 0.30); }
+			.x:active { transform: translateY(1px); }
+
+			.empty {
+				margin-top: 14px;
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				background:
+					radial-gradient(700px 240px at 20% 10%, rgba(139, 92, 246, 0.12), transparent 60%),
+					radial-gradient(700px 240px at 85% 0%, rgba(34, 197, 94, 0.10), transparent 60%),
+					rgba(255, 255, 255, 0.045);
+				border-radius: var(--radius);
+				padding: 18px;
+				color: var(--muted);
+				box-shadow: var(--shadow-soft);
+			}
+
+			dialog {
+				border: none;
+				padding: 0;
+				background: transparent;
+				color: inherit;
+			}
+			dialog::backdrop { background: rgba(0, 0, 0, 0.74); }
+
+			.viewer {
+				width: min(1100px, calc(100vw - 24px));
+				margin: 0 auto;
+				border-radius: 18px;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(10, 14, 28, 0.92);
+				box-shadow: var(--shadow);
+				overflow: hidden;
+				backdrop-filter: blur(calc(var(--blur) + 4px));
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				* { animation: none !important; transition: none !important; }
+				body::before { display: none; }
+			}
+
+			.viewer-top {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 10px;
+				padding: 10px 12px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+				background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+			}
+
+			.viewer-title {
+				display: grid;
+				gap: 2px;
+			}
+			.viewer-title strong {
+				font-size: 13px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				max-width: 64vw;
+			}
+			.viewer-title span {
+				font-size: 12px;
+				color: rgba(255, 255, 255, 0.68);
+			}
+
+			.viewer-actions { display: flex; gap: 8px; align-items: center; }
+
+			.viewer-body {
+				background:
+					radial-gradient(900px 420px at 25% 20%, rgba(139, 92, 246, 0.12), transparent 60%),
+					radial-gradient(900px 420px at 80% 15%, rgba(14, 165, 233, 0.10), transparent 60%),
+					rgba(0, 0, 0, 0.22);
+				display: grid;
+				place-items: center;
+				padding: 10px;
+			}
+
+			.viewer-stage {
+				width: min(1100px, 100%);
+				height: min(78vh, 820px);
+				position: relative;
+				border-radius: 14px;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(0, 0, 0, 0.32);
+				box-shadow: var(--shadow);
+				overflow: hidden;
+			}
+
+			.viewer-nav {
+				background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+			}
+			.viewer-stage .slide-frame {
+				position: absolute;
+				inset: 0;
+				display: grid;
+				place-items: center;
+				padding: 6px;
+				min-height: 0;
+			}
+			.viewer-stage .slide-frame > * {
+				width: 100%;
+				height: 100%;
+				min-height: 0;
+			}
+			.viewer-stage img.viewer-slide {
+				width: 100%;
+				height: 100%;
+				object-fit: contain;
+				border-radius: 12px;
+				border: 1px solid rgba(255, 255, 255, 0.10);
+				background: rgba(0, 0, 0, 0.35);
+				transform: translateZ(0);
+			}
+			.viewer-stage .viewer-collage {
+				width: 100%;
+				height: 100%;
+				box-shadow: none;
+				padding: 6px;
+				min-height: 0;
+			}
+			.viewer-stage .viewer-collage .tile { min-height: 0; }
+
+			.viewer-media {
+				max-width: 100%;
+				max-height: min(72vh, 720px);
+				border-radius: 14px;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(0, 0, 0, 0.4);
+			}
+
+			.viewer-collage {
+				width: min(1100px, 100%);
+				height: min(72vh, 720px);
+				display: grid;
+				gap: 8px;
+				padding: 8px;
+				border-radius: 14px;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(0, 0, 0, 0.35);
+				box-shadow: var(--shadow);
+				overflow: hidden;
+				min-height: 0;
+			}
+
+			.viewer-collage .tile {
+				width: 100%;
+				height: 100%;
+				position: relative;
+				overflow: hidden;
+				border-radius: 12px;
+				border: 1px solid rgba(255, 255, 255, 0.10);
+				background: rgba(0, 0, 0, 0.55);
+				transform: translateZ(0);
+			}
+			.viewer-collage .tile::before {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background-image: var(--tile-bg);
+				background-size: cover;
+				background-position: center;
+				filter: blur(12px) brightness(0.92) saturate(1.03);
+				transform: scale(1.12);
+				opacity: 0.82;
+			}
+			.viewer-collage .tile > .tile-media {
+				position: relative;
+				z-index: 1;
+				width: 100%;
+				height: 100%;
+				object-fit: contain;
+				object-position: center;
+				display: block;
+				background: transparent;
+			}
+
+			.viewer-collage[data-layout="one"] {
+				grid-template-columns: 1fr;
+				grid-template-rows: 1fr;
+			}
+
+			.viewer-collage[data-layout="two"] {
+				grid-template-columns: 1fr 1fr;
+				grid-template-rows: 1fr;
+			}
+			.viewer-collage[data-layout="two-overlay"] {
+				grid-template-columns: 1fr;
+				grid-template-rows: 1fr;
+			}
+			.viewer-collage[data-layout="two-overlay"] .tile:nth-child(1) {
+				grid-column: 1;
+				grid-row: 1;
+			}
+			.viewer-collage[data-layout="two-overlay"] .tile:nth-child(2) {
+				grid-column: 1;
+				grid-row: 1;
+				align-self: end;
+				justify-self: end;
+				width: clamp(240px, 44%, 520px);
+				height: clamp(180px, 40%, 420px);
+				margin: 10px;
+				box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(0, 0, 0, 0.70);
+			}
+			.viewer-collage[data-layout="two-overlay-left"] {
+				grid-template-columns: 1fr;
+				grid-template-rows: 1fr;
+			}
+			.viewer-collage[data-layout="two-overlay-left"] .tile:nth-child(1) {
+				grid-column: 1;
+				grid-row: 1;
+			}
+			.viewer-collage[data-layout="two-overlay-left"] .tile:nth-child(2) {
+				grid-column: 1;
+				grid-row: 1;
+				align-self: start;
+				justify-self: start;
+				width: clamp(240px, 44%, 520px);
+				height: clamp(180px, 40%, 420px);
+				margin: 10px;
+				box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(0, 0, 0, 0.70);
+			}
+			.viewer-collage[data-layout="two-h"] {
+				grid-template-columns: 1fr;
+				grid-template-rows: 1fr 1fr;
+			}
+			.viewer-collage[data-layout="two-v"] {
+				grid-template-columns: 1fr 1fr;
+				grid-template-rows: 1fr;
+			}
+
+			.viewer-collage[data-layout="quad"] {
+				grid-template-columns: 1fr 1fr;
+				grid-template-rows: 1fr 1fr;
+			}
+
+			.viewer-collage[data-layout="three"] {
+				grid-template-columns: 1.6fr 1fr;
+				grid-template-rows: 1fr 1fr;
+				grid-template-areas:
+					"a b"
+					"a c";
+			}
+			.viewer-collage[data-layout="three"] .tile:nth-child(1) { grid-area: a; }
+			.viewer-collage[data-layout="three"] .tile:nth-child(2) { grid-area: b; }
+			.viewer-collage[data-layout="three"] .tile:nth-child(3) { grid-area: c; }
+
+			.viewer-collage[data-layout="three-right"] {
+				grid-template-columns: 1fr 1.6fr;
+				grid-template-rows: 1fr 1fr;
+				grid-template-areas:
+					"b a"
+					"c a";
+			}
+			.viewer-collage[data-layout="three-right"] .tile:nth-child(1) { grid-area: a; }
+			.viewer-collage[data-layout="three-right"] .tile:nth-child(2) { grid-area: b; }
+			.viewer-collage[data-layout="three-right"] .tile:nth-child(3) { grid-area: c; }
+
+			.viewer-collage[data-layout^="mosaic"] {
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+				grid-auto-rows: 1fr;
+			}
+			.viewer-collage[data-layout="mosaic-5"] {
+				grid-template-columns: 1.15fr 1fr 1fr;
+				grid-template-rows: 1fr 1fr;
+			}
+			.viewer-collage[data-layout="mosaic-5"] .tile:nth-child(1) {
+				grid-row: span 2;
+			}
+			.viewer-collage[data-layout="mosaic-5r"] {
+				grid-template-columns: 1fr 1fr 1.15fr;
+				grid-template-rows: 1fr 1fr;
+			}
+			.viewer-collage[data-layout="mosaic-5r"] .tile:nth-child(2) {
+				grid-column: 3;
+				grid-row: span 2;
+			}
+			.viewer-collage[data-layout="mosaic-a"] .tile:nth-child(1) {
+				grid-column: span 2;
+				grid-row: span 2;
+			}
+			.viewer-collage[data-layout="mosaic-b"] .tile:nth-child(2) {
+				grid-column: span 2;
+				grid-row: span 2;
+			}
+			.viewer-collage[data-layout="mosaic-c"] .tile:nth-child(1) {
+				grid-column: span 2;
+			}
+			.viewer-collage[data-layout="mosaic-c"] .tile:nth-child(4) {
+				grid-column: span 2;
+			}
+
+			@media (max-width: 720px) {
+				.viewer-collage {
+					height: min(66vh, 640px);
+					gap: 8px;
+					padding: 8px;
+				}
+				.viewer-stage {
+					height: min(70vh, 680px);
+				}
+				.viewer-stage .slide-frame { padding: 6px; }
+				.viewer-collage[data-layout="two"],
+				.viewer-collage[data-layout="two-v"],
+				.viewer-collage[data-layout="two-h"] { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+				.viewer-collage[data-layout="two-overlay"] .tile:nth-child(2) {
+					width: 66%;
+					height: 38%;
+					margin: 8px;
+				}
+				.viewer-collage[data-layout="two-overlay-left"] .tile:nth-child(2) {
+					width: 66%;
+					height: 38%;
+					margin: 8px;
+				}
+				.viewer-collage[data-layout="quad"] {
+					grid-template-columns: 1fr;
+					grid-template-rows: repeat(4, minmax(0, 1fr));
+				}
+				.viewer-collage[data-layout="three"] {
+					grid-template-columns: 1fr;
+					grid-template-rows: 1.3fr 1fr 1fr;
+					grid-template-areas:
+						"a"
+						"b"
+						"c";
+				}
+				.viewer-collage[data-layout="three-right"] {
+					grid-template-columns: 1fr;
+					grid-template-rows: 1.3fr 1fr 1fr;
+					grid-template-areas:
+						"a"
+						"b"
+						"c";
+				}
+				.viewer-collage[data-layout^="mosaic"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+				.viewer-collage[data-layout="mosaic-a"] .tile:nth-child(1) { grid-column: span 2; grid-row: span 1; }
+				.viewer-collage[data-layout="mosaic-b"] .tile:nth-child(2) { grid-column: span 2; grid-row: span 1; }
+				.viewer-collage[data-layout="mosaic-c"] .tile:nth-child(1),
+				.viewer-collage[data-layout="mosaic-c"] .tile:nth-child(4) { grid-column: span 2; grid-row: span 1; }
+			}
+
+			.fx {
+				animation-duration: 520ms;
+				animation-timing-function: ease;
+				animation-fill-mode: both;
+				will-change: transform, opacity, clip-path;
+			}
+
+			@keyframes fxFade {
+				from { opacity: 0; transform: translateY(6px); }
+				to { opacity: 1; transform: translateY(0); }
+			}
+			@keyframes fxZoom {
+				from { opacity: 0; transform: scale(0.965); }
+				to { opacity: 1; transform: scale(1); }
+			}
+			@keyframes fxSlide {
+				from { opacity: 0; transform: translateX(18px); }
+				to { opacity: 1; transform: translateX(0); }
+			}
+			@keyframes fxKenBurns {
+				from { opacity: 0; transform: scale(1.02); }
+				to { opacity: 1; transform: scale(1); }
+			}
+			@keyframes fxFlip {
+				from { opacity: 0; transform: perspective(900px) rotateY(22deg) translateY(6px); }
+				to { opacity: 1; transform: perspective(900px) rotateY(0deg) translateY(0); }
+			}
+			@keyframes fxRotate {
+				from { opacity: 0; transform: rotate(-1.6deg) scale(0.985); filter: blur(1px); }
+				to { opacity: 1; transform: rotate(0deg) scale(1); filter: blur(0); }
+			}
+			@keyframes fxWipeLeft {
+				from { opacity: 0.9; clip-path: inset(0 100% 0 0); transform: translateX(6px); }
+				to { opacity: 1; clip-path: inset(0 0 0 0); transform: translateX(0); }
+			}
+			@keyframes fxWipeUp {
+				from { opacity: 0.9; clip-path: inset(100% 0 0 0); transform: translateY(10px); }
+				to { opacity: 1; clip-path: inset(0 0 0 0); transform: translateY(0); }
+			}
+			@keyframes fxCurtain {
+				from { opacity: 0.95; clip-path: inset(0 50% 0 50%); transform: scale(0.995); }
+				to { opacity: 1; clip-path: inset(0 0 0 0); transform: scale(1); }
+			}
+			@keyframes fxCircle {
+				from { opacity: 0.95; clip-path: circle(0% at 50% 50%); transform: scale(1.01); }
+				to { opacity: 1; clip-path: circle(150% at 50% 50%); transform: scale(1); }
+			}
+			@keyframes fxDiamond {
+				from {
+					opacity: 0.95;
+					clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%);
+					transform: scale(1.02);
+				}
+				to {
+					opacity: 1;
+					clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+					transform: scale(1);
+				}
+			}
+			@keyframes fxWindow {
+				from { opacity: 0.95; clip-path: inset(38% 42% 38% 42% round 18px); transform: scale(1.02); }
+				to { opacity: 1; clip-path: inset(0 0 0 0 round 18px); transform: scale(1); }
+			}
+
+			.fx-fade { animation-name: fxFade; }
+			.fx-zoom { animation-name: fxZoom; }
+			.fx-slide { animation-name: fxSlide; }
+			.fx-kenburns { animation-name: fxKenBurns; }
+			.fx-flip { animation-name: fxFlip; }
+			.fx-rotate { animation-name: fxRotate; }
+			.fx-wipe-left { animation-name: fxWipeLeft; }
+			.fx-wipe-up { animation-name: fxWipeUp; }
+			.fx-curtain { animation-name: fxCurtain; }
+			.fx-circle { animation-name: fxCircle; }
+			.fx-diamond { animation-name: fxDiamond; }
+			.fx-window { animation-name: fxWindow; }
+
+			.viewer-nav {
+				display: flex;
+				justify-content: space-between;
+				gap: 10px;
+				padding: 12px;
+				border-top: 1px solid rgba(255, 255, 255, 0.12);
+			}
+
+			.kbd {
+				font-size: 12px;
+				color: rgba(255, 255, 255, 0.7);
+				border: 1px solid rgba(255, 255, 255, 0.18);
+				background: rgba(255, 255, 255, 0.06);
+				padding: 2px 6px;
+				border-radius: 7px;
+			}
+
+			.sr-only {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0, 0, 0, 0);
+				white-space: nowrap;
+				border: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="wrap">
+			<header>
+				<div class="title">
+					<h1>Media Gallery</h1>
+					<p>One simple website for your photos and videos — add files, browse, and view fullscreen.</p>
+				</div>
+				<div class="pill-row" role="group" aria-label="Filter media">
+					<button class="pill" type="button" data-filter="all" aria-pressed="true">All</button>
+					<button class="pill" type="button" data-filter="image" aria-pressed="false">Photos</button>
+					<button class="pill" type="button" data-filter="video" aria-pressed="false">Videos</button>
+				</div>
+			</header>
+
+			<div class="bar" style="margin-top: 0;">
+				<div class="pill-row" role="group" aria-label="Layout">
+					<button class="pill" type="button" data-layout="grid" aria-pressed="true">Grid</button>
+					<button class="pill" type="button" data-layout="masonry" aria-pressed="false">Masonry</button>
+					<button class="pill" type="button" data-layout="pattern" aria-pressed="false">Pattern</button>
+				</div>
+				<div class="controls" style="justify-content: flex-end;">
+					<div class="pill-row" role="group" aria-label="Card style">
+						<button class="pill" type="button" data-style="mixed" aria-pressed="true">Mixed</button>
+						<button class="pill" type="button" data-style="glass" aria-pressed="false">Glass</button>
+						<button class="pill" type="button" data-style="neon" aria-pressed="false">Neon</button>
+						<button class="pill" type="button" data-style="pastel" aria-pressed="false">Pastel</button>
+						<button class="pill" type="button" data-style="paper" aria-pressed="false">Paper</button>
+					</div>
+					<button class="btn" type="button" id="jumbleBtn" title="Jumble the Pattern layout">Jumble</button>
+					<button class="btn" type="button" id="shuffleBtn" title="Shuffle card styles">Shuffle</button>
+				</div>
+			</div>
+
+			<div class="bar">
+				<label>
+					<span class="sr-only">Search</span>
+					<input id="search" class="search" type="search" placeholder="Search by filename…" autocomplete="off" />
+				</label>
+				<div class="controls">
+					<input id="file" type="file" multiple accept="image/*,video/*" hidden />
+					<button class="btn primary" type="button" id="addBtn">Add photos/videos</button>
+					<button class="btn" type="button" id="slideshowBtn" title="Start slideshow from the first visible photo">Slideshow</button>
+					<button class="btn" type="button" id="demoBtn" title="Add a few demo items">Add demo</button>
+					<button class="btn danger" type="button" id="clearBtn" title="Remove all items">Clear</button>
+				</div>
+			</div>
+
+			<section id="drop" class="drop" aria-label="Upload area">
+				<div class="drop-row">
+					<div>
+						<div style="font-weight: 600;">Drop files here</div>
+						<div class="hint">Or click “Add photos/videos”. Supported: images + videos.</div>
+					</div>
+					<div class="hint">
+						Tips: <span class="kbd">Enter</span> open, <span class="kbd">←</span>/<span class="kbd">→</span> navigate, <span class="kbd">Esc</span> close
+					</div>
+				</div>
+				<div id="empty" class="empty" hidden>
+					No media yet. Add photos/videos to start building your gallery.
+				</div>
+				<div id="grid" class="grid" aria-label="Media items"></div>
+			</section>
+		</div>
+
+		<dialog id="viewer">
+			<div class="viewer" role="document" aria-label="Media viewer">
+				<div class="viewer-top">
+					<div class="viewer-title">
+						<strong id="viewerName">—</strong>
+						<span id="viewerSub">—</span>
+					</div>
+					<div class="viewer-actions">
+						<button class="btn primary" type="button" id="playBtn" title="Play/Pause slideshow (P)">Play</button>
+						<input id="musicFile" type="file" accept="audio/*" hidden />
+						<button class="btn" type="button" id="musicBtn" title="Choose background music">Music</button>
+						<button class="btn" type="button" id="musicToggleBtn" title="Toggle music (M)" disabled>Music Off</button>
+						<label class="sr-only" for="musicVol">Music volume</label>
+						<input id="musicVol" class="range" type="range" min="0" max="1" step="0.01" value="0.6" title="Music volume" disabled />
+						<label class="sr-only" for="speedSelect">Speed</label>
+						<select id="speedSelect" class="select" title="Slideshow speed">
+							<option value="2000">2s</option>
+							<option value="3000" selected>3s</option>
+							<option value="5000">5s</option>
+							<option value="8000">8s</option>
+						</select>
+						<label class="sr-only" for="layoutSelect">Layout</label>
+						<select id="layoutSelect" class="select" title="Slideshow layout">
+							<option value="single">Single</option>
+							<option value="smart" selected>Auto Mixed</option>
+							<option value="cycle">1 → 2 → Many</option>
+							<option value="two">Two</option>
+							<option value="many">Many</option>
+						</select>
+						<label class="sr-only" for="effectSelect">Effect</label>
+						<select id="effectSelect" class="select" title="Transition effect">
+							<option value="auto" selected>Auto (Different each slide)</option>
+							<option value="morph">Morph</option>
+							<option value="fade">Fade</option>
+							<option value="push">Push</option>
+							<option value="wipe">Wipe</option>
+							<option value="zoom">Zoom</option>
+							<option value="cover">Cover</option>
+						</select>
+						<button class="btn" type="button" id="downloadBtn" title="Download this file">Download</button>
+						<button class="btn" type="button" id="closeBtn" title="Close (Esc)">Close</button>
+					</div>
+				</div>
+				<div class="viewer-body" id="viewerBody"></div>
+				<div class="viewer-nav">
+					<button class="btn" type="button" id="prevBtn" title="Previous (Left Arrow)">Prev</button>
+					<div class="hint">Use <span class="kbd">←</span> / <span class="kbd">→</span> to navigate</div>
+					<button class="btn" type="button" id="nextBtn" title="Next (Right Arrow)">Next</button>
+				</div>
+			</div>
+			<audio id="bgAudio" preload="none" loop></audio>
+		</dialog>
+
+		<script>
+			/** @typedef {{id: string, kind: 'image'|'video', name: string, size: number, type: string, url: string, file?: File, style?: 'glass'|'neon'|'pastel'|'paper'}} MediaItem */
+			/** @typedef {{kind?: 'image'|'video', name?: string, url: string, type?: string}} HostedMediaItem */
+
+			const state = {
+				/** @type {MediaItem[]} */
+				items: [],
+				filter: 'all',
+				query: '',
+				activeId: null,
+				layout: 'grid',
+				styleMode: 'mixed',
+				pattern: {
+					seed: 1,
+				},
+				slideshow: {
+					playing: false,
+					intervalMs: 3000,
+					effect: 'auto',
+					layoutMode: 'smart',
+					autoMode: true,
+					cycleStep: 0,
+					layoutSeqStep: 0,
+					cursor: 0,
+					lastGroupCount: 1,
+					effectHistory: ['fade', 'zoom'],
+					effectBag: [],
+					effectOrderIndex: 0,
+					lastLayoutKey: 'one',
+					timer: null,
+				},
+				music: {
+					enabled: false,
+					name: '',
+					volume: 0.6,
+					objectUrl: null,
+				},
+			};
+
+			const el = {
+				file: document.getElementById('file'),
+				addBtn: document.getElementById('addBtn'),
+				slideshowBtn: document.getElementById('slideshowBtn'),
+				clearBtn: document.getElementById('clearBtn'),
+				demoBtn: document.getElementById('demoBtn'),
+				jumbleBtn: document.getElementById('jumbleBtn'),
+				shuffleBtn: document.getElementById('shuffleBtn'),
+				search: document.getElementById('search'),
+				drop: document.getElementById('drop'),
+				grid: document.getElementById('grid'),
+				empty: document.getElementById('empty'),
+				pills: Array.from(document.querySelectorAll('.pill')),
+				filterPills: Array.from(document.querySelectorAll('.pill[data-filter]')),
+				layoutPills: Array.from(document.querySelectorAll('.pill[data-layout]')),
+				stylePills: Array.from(document.querySelectorAll('.pill[data-style]')),
+
+				viewer: document.getElementById('viewer'),
+				viewerBody: document.getElementById('viewerBody'),
+				viewerName: document.getElementById('viewerName'),
+				viewerSub: document.getElementById('viewerSub'),
+				closeBtn: document.getElementById('closeBtn'),
+				prevBtn: document.getElementById('prevBtn'),
+				nextBtn: document.getElementById('nextBtn'),
+				downloadBtn: document.getElementById('downloadBtn'),
+				playBtn: document.getElementById('playBtn'),
+				musicFile: document.getElementById('musicFile'),
+				musicBtn: document.getElementById('musicBtn'),
+				musicToggleBtn: document.getElementById('musicToggleBtn'),
+				musicVol: document.getElementById('musicVol'),
+				bgAudio: document.getElementById('bgAudio'),
+				speedSelect: document.getElementById('speedSelect'),
+				layoutSelect: document.getElementById('layoutSelect'),
+				effectSelect: document.getElementById('effectSelect'),
+			};
+
+			const SLIDESHOW_EFFECTS = /** @type {const} */ ([
+				'morph',
+				'fade',
+				'push',
+				'wipe',
+				'zoom',
+				'cover',
+			]);
+
+			function mod(n, m) {
+				return ((n % m) + m) % m;
+			}
+
+			function resolveFxClass(effect) {
+				const fx = effect || 'fade';
+				if (fx === 'zoom') return 'fx-zoom';
+				if (fx === 'slide') return 'fx-slide';
+				if (fx === 'kenburns') return 'fx-kenburns';
+				if (fx === 'flip') return 'fx-flip';
+				if (fx === 'rotate') return 'fx-rotate';
+				if (fx === 'wipe-left') return 'fx-wipe-left';
+				if (fx === 'wipe-up') return 'fx-wipe-up';
+				if (fx === 'curtain') return 'fx-curtain';
+				if (fx === 'circle') return 'fx-circle';
+				if (fx === 'diamond') return 'fx-diamond';
+				if (fx === 'window') return 'fx-window';
+				if (fx === 'push') return 'fx-slide';
+				if (fx === 'cover') return 'fx-slide';
+				if (fx === 'morph') return 'fx-fade';
+				if (fx === 'wipe') return 'fx-wipe-left';
+				return 'fx-fade';
+			}
+
+			function pickSlideshowEffect() {
+				if (state.slideshow.effect !== 'auto') return state.slideshow.effect;
+				// Deterministic cycle so every slide is different:
+				// Morph → Fade → Push → Wipe → Zoom → Cover → repeat
+				const idx = Number.isFinite(state.slideshow.effectOrderIndex) ? state.slideshow.effectOrderIndex : 0;
+				const pick = SLIDESHOW_EFFECTS[idx % SLIDESHOW_EFFECTS.length] || 'fade';
+				state.slideshow.effectOrderIndex = (idx + 1) % SLIDESHOW_EFFECTS.length;
+				const recent = Array.isArray(state.slideshow.effectHistory) ? state.slideshow.effectHistory : [];
+				state.slideshow.effectHistory = [...recent.slice(-3), pick];
+				return pick;
+			}
+
+			function pickDir() {
+				return ['left', 'right', 'up', 'down'][Math.floor(Math.random() * 4)];
+			}
+
+			function dirToOffset(dir, amountPx) {
+				if (dir === 'left') return { dx: -amountPx, dy: 0 };
+				if (dir === 'right') return { dx: amountPx, dy: 0 };
+				if (dir === 'up') return { dx: 0, dy: -amountPx };
+				return { dx: 0, dy: amountPx };
+			}
+
+			function dirToClipStart(dir) {
+				if (dir === 'left') return 'inset(0 100% 0 0)';
+				if (dir === 'right') return 'inset(0 0 0 100%)';
+				if (dir === 'up') return 'inset(100% 0 0 0)';
+				return 'inset(0 0 100% 0)';
+			}
+
+			function ensureViewerStage() {
+				let stage = el.viewerBody.querySelector('.viewer-stage');
+				if (stage) return stage;
+				el.viewerBody.innerHTML = '';
+				stage = document.createElement('div');
+				stage.className = 'viewer-stage';
+				el.viewerBody.appendChild(stage);
+				return stage;
+			}
+
+			function getStageMaxBox() {
+				const bodyW = el.viewerBody?.clientWidth || 1100;
+				const maxW = Math.min(1100, Math.max(320, bodyW - 24));
+				const isSmall = window.matchMedia('(max-width: 720px)').matches;
+				const vhFactor = isSmall ? 0.70 : 0.78;
+				const hardMaxH = isSmall ? 680 : 820;
+				const maxH = Math.min(window.innerHeight * vhFactor, hardMaxH);
+				return { maxW, maxH };
+			}
+
+			function fitBoxToRatio(maxW, maxH, ratio) {
+				let w = maxW;
+				let h = w / ratio;
+				if (h > maxH) {
+					h = maxH;
+					w = h * ratio;
+				}
+				return { w, h };
+			}
+
+			function setStageSize(stage, w, h) {
+				stage.style.width = `${Math.round(w)}px`;
+				stage.style.height = `${Math.round(h)}px`;
+			}
+
+			function resetStageToMax(stage) {
+				const { maxW, maxH } = getStageMaxBox();
+				setStageSize(stage, maxW, maxH);
+			}
+
+			function setStageToImage(stage, imgEl) {
+				const nw = imgEl.naturalWidth || 0;
+				const nh = imgEl.naturalHeight || 0;
+				if (!nw || !nh) {
+					resetStageToMax(stage);
+					return;
+				}
+				const ratio = nw / nh;
+				const { maxW, maxH } = getStageMaxBox();
+				const { w, h } = fitBoxToRatio(maxW, maxH, ratio);
+				setStageSize(stage, w, h);
+			}
+
+			function transitionFrames(stage, nextFrame, effectName) {
+				const prevFrame = stage.querySelector('.slide-frame[data-active="true"]');
+				nextFrame.dataset.active = 'true';
+				stage.appendChild(nextFrame);
+
+				const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+				if (!prevFrame || prefersReduced) {
+					if (prevFrame) prevFrame.remove();
+					return;
+				}
+
+				prevFrame.dataset.active = 'false';
+				const duration = effectName === 'wipe' || effectName === 'morph' ? 680 : effectName === 'push' || effectName === 'cover' ? 620 : 540;
+				const easing = 'cubic-bezier(0.2, 0.9, 0.2, 1)';
+
+				/** @type {Animation[]} */
+				const animations = [];
+				const dir = pickDir();
+
+				// Ensure clip-path is applied to a clean node
+				prevFrame.style.clipPath = '';
+				nextFrame.style.clipPath = '';
+				prevFrame.style.filter = '';
+				nextFrame.style.filter = '';
+
+				if (effectName === 'fade') {
+					animations.push(prevFrame.animate([{ opacity: 1 }, { opacity: 0 }], { duration, easing }));
+					animations.push(nextFrame.animate([{ opacity: 0 }, { opacity: 1 }], { duration, easing }));
+				} else if (effectName === 'zoom') {
+					animations.push(prevFrame.animate([{ opacity: 1 }, { opacity: 0 }], { duration, easing }));
+					animations.push(nextFrame.animate([{ opacity: 0, transform: 'scale(0.93)' }, { opacity: 1, transform: 'scale(1)' }], { duration, easing }));
+				} else if (effectName === 'wipe') {
+					// More compatible wipe: scale reveal from an edge.
+					const isHorizontal = dir === 'left' || dir === 'right';
+					nextFrame.style.transformOrigin =
+						dir === 'left' ? '0% 50%'
+						: dir === 'right' ? '100% 50%'
+						: dir === 'up' ? '50% 0%'
+						: '50% 100%';
+					animations.push(prevFrame.animate([{ opacity: 1 }, { opacity: 0.2 }], { duration, easing }));
+					animations.push(
+						nextFrame.animate(
+							isHorizontal
+								? [{ opacity: 1, transform: 'scaleX(0.02)' }, { opacity: 1, transform: 'scaleX(1)' }]
+								: [{ opacity: 1, transform: 'scaleY(0.02)' }, { opacity: 1, transform: 'scaleY(1)' }],
+							{ duration, easing }
+						)
+					);
+				} else if (effectName === 'push') {
+					const { dx, dy } = dirToOffset(dir, 70);
+					animations.push(prevFrame.animate([{ transform: 'translate(0px, 0px)', opacity: 1 }, { transform: `translate(${dx}px, ${dy}px)`, opacity: 1 }], { duration, easing }));
+					animations.push(nextFrame.animate([{ transform: `translate(${-dx}px, ${-dy}px)`, opacity: 1 }, { transform: 'translate(0px, 0px)', opacity: 1 }], { duration, easing }));
+				} else if (effectName === 'cover') {
+					const { dx, dy } = dirToOffset(dir, 86);
+					animations.push(prevFrame.animate([{ opacity: 1 }, { opacity: 1 }], { duration, easing }));
+					animations.push(nextFrame.animate([{ transform: `translate(${-dx}px, ${-dy}px)`, opacity: 1 }, { transform: 'translate(0px, 0px)', opacity: 1 }], { duration, easing }));
+				} else {
+					// Morph
+					animations.push(prevFrame.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.992)' }], { duration, easing }));
+					animations.push(nextFrame.animate([{ opacity: 0, transform: 'scale(1.01)' }, { opacity: 1, transform: 'scale(1)' }], { duration, easing }));
+				}
+
+				Promise.allSettled(animations.map((a) => a.finished)).then(() => {
+					if (prevFrame.isConnected) prevFrame.remove();
+				});
+			}
+
+			function getManyCount() {
+				if (window.matchMedia('(max-width: 420px)').matches) return 4;
+				if (window.matchMedia('(max-width: 900px)').matches) return 4;
+				return 5;
+			}
+
+			function uniqCounts(list) {
+				return Array.from(new Set(list.filter((n) => Number.isFinite(n) && n > 0)));
+			}
+
+			function pickWeighted(items) {
+				// items: {value:number, weight:number}[]
+				let total = 0;
+				for (const it of items) total += Math.max(0, it.weight || 0);
+				if (total <= 0) return items[0]?.value;
+				let r = Math.random() * total;
+				for (const it of items) {
+					r -= Math.max(0, it.weight || 0);
+					if (r <= 0) return it.value;
+				}
+				return items[items.length - 1]?.value;
+			}
+
+			function pickSmartGroupCount(totalPhotos) {
+				const many = Math.min(getManyCount(), totalPhotos);
+				const candidates = uniqCounts([
+					1,
+					totalPhotos >= 2 ? 2 : null,
+					totalPhotos >= 3 ? 3 : null,
+					totalPhotos >= 4 ? many : null,
+				]);
+				if (!candidates.length) return 0;
+				if (candidates.length === 1) return candidates[0];
+
+				const last = state.slideshow.lastGroupCount || 1;
+				const withoutRepeat = candidates.filter((c) => c !== last);
+				const usable = withoutRepeat.length ? withoutRepeat : candidates;
+
+				const weighted = usable.map((value) => {
+					// Bias slightly toward 2 and 3 for variety (PPT-like)
+					const weight = value === 1 ? 2.2 : value === 2 ? 3.2 : value === 3 ? 2.8 : 2.4;
+					return { value, weight };
+				});
+				return pickWeighted(weighted) || usable[0];
+			}
+
+			function getCycleManyCount(totalPhotos) {
+				return Math.max(1, Math.min(getManyCount(), totalPhotos));
+			}
+
+			function getNextGroupCountSmartCycle(totalPhotos, advanceCycle) {
+				// Always cycle: 1 -> 2 -> 3 -> many, then repeat.
+				const step = state.slideshow.layoutSeqStep || 0;
+				const many = getCycleManyCount(totalPhotos);
+				const seq = [1, 2, 3, many];
+				let count = seq[step % seq.length];
+				count = Math.max(1, Math.min(count, totalPhotos));
+				if (advanceCycle) state.slideshow.layoutSeqStep = (step + 1) % seq.length;
+				return count;
+			}
+
+			function getNextGroupCount(totalPhotos, advanceCycle) {
+				if (totalPhotos <= 0) return 0;
+				const mode = state.slideshow.layoutMode || 'single';
+				let count = 1;
+				if (mode === 'single') count = 1;
+				else if (mode === 'two') count = 2;
+				else if (mode === 'many') count = getManyCount();
+				else if (mode === 'smart') count = getNextGroupCountSmartCycle(totalPhotos, advanceCycle);
+				else {
+					// cycle: 1 -> 2 -> many
+					const seq = [1, 2, getManyCount()];
+					count = seq[state.slideshow.cycleStep % seq.length];
+					if (advanceCycle) state.slideshow.cycleStep = (state.slideshow.cycleStep + 1) % seq.length;
+				}
+				return Math.max(1, Math.min(count, totalPhotos));
+			}
+
+			function takeWrap(arr, start, count) {
+				if (count <= 0 || arr.length === 0) return [];
+				const out = [];
+				for (let i = 0; i < count; i += 1) out.push(arr[mod(start + i, arr.length)]);
+				return out;
+			}
+
+			function pickCollageLayoutKey(count) {
+				if (count <= 1) return 'one';
+				const prev = state.slideshow.lastLayoutKey || '';
+				let options;
+				if (count === 2) options = ['two-overlay', 'two-overlay-left'];
+				else if (count === 3) options = ['three', 'three-right'];
+				else if (count === 4) options = ['quad'];
+				else if (count === 5) options = ['mosaic-5', 'mosaic-5r'];
+				else options = ['mosaic-a', 'mosaic-b', 'mosaic-c'];
+				const pool = options.filter((x) => x !== prev);
+				const list = pool.length ? pool : options;
+				const pick = list[Math.floor(Math.random() * list.length)];
+				state.slideshow.lastLayoutKey = pick;
+				return pick;
+			}
+
+			function formatBytes(bytes) {
+				if (!Number.isFinite(bytes) || bytes <= 0) return '—';
+				const units = ['B', 'KB', 'MB', 'GB'];
+				let value = bytes;
+				let i = 0;
+				while (value >= 1024 && i < units.length - 1) {
+					value /= 1024;
+					i += 1;
+				}
+				return `${value.toFixed(value >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+			}
+
+			function safeRevoke(url) {
+				if (typeof url !== 'string') return;
+				if (!url.startsWith('blob:')) return;
+				try { URL.revokeObjectURL(url); } catch { /* ignore */ }
+			}
+
+			function uid() {
+				return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+			}
+
+			const STYLES = /** @type {const} */ (['glass', 'neon', 'pastel', 'paper']);
+			function pickStyle() {
+				return STYLES[Math.floor(Math.random() * STYLES.length)];
+			}
+
+			// Deterministic PRNG for stable "jumble" layouts
+			function mulberry32(seed) {
+				let a = seed >>> 0;
+				return function rand() {
+					a |= 0;
+					a = (a + 0x6d2b79f5) | 0;
+					let t = Math.imul(a ^ (a >>> 15), 1 | a);
+					t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+					return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+				};
+			}
+
+			function getPatternCols() {
+				// Keep cards readable on smaller screens.
+				if (window.matchMedia('(max-width: 420px)').matches) return 2;
+				if (window.matchMedia('(max-width: 720px)').matches) return 6;
+				return 12;
+			}
+
+			function allowedGroupSizes(cols) {
+				if (cols <= 2) return [1, 2];
+				if (cols <= 6) return [1, 2, 3];
+				return [1, 2, 3, 4];
+			}
+
+			function groupToSpan(cols, groupSize) {
+				// For 12 cols: 1->12, 2->6, 3->4, 4->3
+				// For 6 cols:  1->6,  2->3, 3->2
+				// For 2 cols:  1->2,  2->1
+				if (groupSize <= 0) return cols;
+				return Math.max(1, Math.floor(cols / groupSize));
+			}
+
+			function buildJumbleGroups(count, cols, seed) {
+				const sizesAllowed = allowedGroupSizes(cols);
+				const rand = mulberry32(seed);
+				/** @type {number[]} */
+				const groups = [];
+				let remaining = count;
+				let prev = 0;
+				while (remaining > 0) {
+					const options = sizesAllowed.filter((s) => s <= remaining && s !== prev);
+					let pick = options.length ? options[Math.floor(rand() * options.length)] : Math.min(remaining, sizesAllowed[sizesAllowed.length - 1]);
+					// If we are on a small screen, avoid too many tiny cards
+					if (cols <= 2 && pick === 2 && remaining === 1) pick = 1;
+					groups.push(pick);
+					prev = pick;
+					remaining -= pick;
+				}
+				return groups;
+			}
+
+			function guessKind(file) {
+				if (file.type.startsWith('image/')) return 'image';
+				if (file.type.startsWith('video/')) return 'video';
+				return null;
+			}
+
+			function addFiles(fileList) {
+				const files = Array.from(fileList || []);
+				const accepted = [];
+				for (const file of files) {
+					const kind = guessKind(file);
+					if (!kind) continue;
+					accepted.push({
+						id: uid(),
+						kind,
+						name: file.name || (kind === 'image' ? 'Photo' : 'Video'),
+						size: file.size || 0,
+						type: file.type || '',
+						url: URL.createObjectURL(file),
+						file,
+						style: pickStyle(),
+					});
+				}
+
+				if (accepted.length === 0) return;
+				state.items.unshift(...accepted);
+				render();
+			}
+
+			function guessKindFromUrl(url) {
+				const u = String(url || '').toLowerCase();
+				if (u.includes('.mp4') || u.includes('.webm') || u.includes('.mov') || u.includes('.m4v') || u.includes('video/')) return 'video';
+				return 'image';
+			}
+
+			/** @param {HostedMediaItem[]} items */
+			function addHostedItems(items) {
+				const list = Array.isArray(items) ? items : [];
+				const accepted = [];
+				for (const raw of list) {
+					if (!raw || !raw.url) continue;
+					const absoluteUrl = new URL(raw.url, window.location.href).href;
+					const kind = raw.kind || guessKindFromUrl(absoluteUrl);
+					if (kind !== 'image' && kind !== 'video') continue;
+					accepted.push({
+						id: uid(),
+						kind,
+						name: raw.name || absoluteUrl.split('/').pop() || (kind === 'image' ? 'Photo' : 'Video'),
+						size: 0,
+						type: raw.type || '',
+						url: absoluteUrl,
+						style: pickStyle(),
+					});
+				}
+				if (!accepted.length) return;
+				state.items.unshift(...accepted);
+				render();
+			}
+
+			async function loadDefaultGalleryJson() {
+				// For QR + GitHub Pages: if gallery.json exists, auto-load items.
+				// Keep silent if missing.
+				try {
+					const res = await fetch('gallery.json', { cache: 'no-store' });
+					if (!res.ok) return;
+					const data = await res.json();
+					const items = Array.isArray(data?.items) ? data.items : [];
+					addHostedItems(items);
+				} catch {
+					// ignore
+				}
+			}
+
+			function clearAll() {
+				for (const item of state.items) safeRevoke(item.url);
+				state.items = [];
+				state.activeId = null;
+				render();
+				closeViewer();
+			}
+
+			function removeOne(id) {
+				const idx = state.items.findIndex((x) => x.id === id);
+				if (idx === -1) return;
+				const [removed] = state.items.splice(idx, 1);
+				safeRevoke(removed.url);
+				if (state.activeId === id) {
+					closeViewer();
+				}
+				render();
+			}
+
+			function getVisibleItems() {
+				const q = state.query.trim().toLowerCase();
+				return state.items.filter((item) => {
+					if (state.filter !== 'all' && item.kind !== state.filter) return false;
+					if (q && !item.name.toLowerCase().includes(q)) return false;
+					return true;
+				});
+			}
+
+			function getVisiblePhotos() {
+				return getVisibleItems().filter((x) => x.kind === 'image');
+			}
+
+			function resolveStyle(item) {
+				if (state.styleMode !== 'mixed') return state.styleMode;
+				return item.style || 'glass';
+			}
+
+			function render() {
+				const visible = getVisibleItems();
+				el.grid.innerHTML = '';
+				el.empty.hidden = state.items.length !== 0;
+
+				el.grid.classList.toggle('masonry', state.layout === 'masonry');
+				el.grid.classList.toggle('pattern', state.layout === 'pattern');
+
+				if (state.items.length !== 0 && visible.length === 0) {
+					const msg = document.createElement('div');
+					msg.className = 'empty';
+					msg.textContent = 'No matches for the current filter/search.';
+					el.grid.appendChild(msg);
+					el.grid.style.gridTemplateColumns = '1fr';
+					return;
+				}
+
+				el.grid.style.gridTemplateColumns = '';
+
+				let patternCols = 12;
+				let groups = [];
+				if (state.layout === 'pattern') {
+					patternCols = getPatternCols();
+					groups = buildJumbleGroups(visible.length, patternCols, state.pattern.seed);
+				}
+
+				let groupIdx = 0;
+				let indexWithinGroup = 0;
+				let currentGroupSize = groups.length ? groups[0] : 1;
+				let currentSpan = groupToSpan(patternCols, currentGroupSize);
+
+				for (const item of visible) {
+					const card = document.createElement('div');
+					card.className = 'card';
+					card.tabIndex = 0;
+					card.setAttribute('role', 'button');
+					card.setAttribute('aria-label', `Open ${item.kind}: ${item.name}`);
+					card.dataset.id = item.id;
+					card.dataset.style = resolveStyle(item);
+
+					// Pattern layout: 1 big, then 2, then 3, then 1, then 4... (jumbled)
+					if (state.layout === 'pattern') {
+						card.style.gridColumn = `span ${currentSpan}`;
+						// Make big cards a bit more cinematic; smaller ones more compact
+						if (currentGroupSize === 1) card.style.aspectRatio = '16 / 9';
+						else if (currentGroupSize === 2) card.style.aspectRatio = '4 / 3';
+						else if (currentGroupSize === 3) card.style.aspectRatio = '1 / 1';
+						else card.style.aspectRatio = '3 / 4';
+
+						indexWithinGroup += 1;
+						if (indexWithinGroup >= currentGroupSize) {
+							groupIdx += 1;
+							indexWithinGroup = 0;
+							currentGroupSize = groups[groupIdx] ?? 1;
+							currentSpan = groupToSpan(patternCols, currentGroupSize);
+						}
+					} else {
+						card.style.gridColumn = '';
+						card.style.aspectRatio = '';
+					}
+
+					const frame = document.createElement('div');
+					frame.className = 'frame';
+					const frameInner = document.createElement('div');
+					frameInner.className = 'frame-inner';
+					frame.appendChild(frameInner);
+					card.appendChild(frame);
+
+					let thumb;
+					if (item.kind === 'image') {
+						thumb = document.createElement('img');
+						thumb.loading = 'lazy';
+						thumb.decoding = 'async';
+						thumb.src = item.url;
+						thumb.alt = '';
+					} else {
+						thumb = document.createElement('video');
+						thumb.src = item.url;
+						thumb.muted = true;
+						thumb.playsInline = true;
+						thumb.preload = 'metadata';
+					}
+					thumb.className = 'thumb';
+					frameInner.appendChild(thumb);
+
+					const removeBtn = document.createElement('button');
+					removeBtn.className = 'x';
+					removeBtn.type = 'button';
+					removeBtn.textContent = 'Remove';
+					removeBtn.addEventListener('click', (e) => {
+						e.stopPropagation();
+						removeOne(item.id);
+					});
+					card.appendChild(removeBtn);
+
+					const meta = document.createElement('div');
+					meta.className = 'meta';
+					const name = document.createElement('div');
+					name.className = 'name';
+					name.textContent = item.name;
+					const sub = document.createElement('div');
+					sub.className = 'sub';
+					const badge = document.createElement('span');
+					badge.className = 'badge';
+					badge.textContent = item.kind === 'image' ? 'Photo' : 'Video';
+					const size = document.createElement('span');
+					size.textContent = formatBytes(item.size);
+					sub.appendChild(badge);
+					sub.appendChild(size);
+					meta.appendChild(name);
+					meta.appendChild(sub);
+					card.appendChild(meta);
+
+					card.addEventListener('click', () => openViewer(item.id));
+					card.addEventListener('keydown', (e) => {
+						if (e.key === 'Enter' || e.key === ' ') {
+							e.preventDefault();
+							openViewer(item.id);
+						}
+					});
+
+					el.grid.appendChild(card);
+				}
+			}
+
+			function openViewer(id) {
+				const visible = getVisibleItems();
+				const item = state.items.find((x) => x.id === id);
+				if (!item) return;
+
+				state.activeId = id;
+				el.viewerName.textContent = item.name;
+				el.viewerSub.textContent = `${item.kind === 'image' ? 'Photo' : 'Video'} • ${formatBytes(item.size)} • ${item.type || 'unknown type'}`;
+				el.viewerBody.innerHTML = '';
+
+				if (item.kind === 'video' && state.slideshow.playing) {
+					// Slideshow is for photos; opening a video pauses it.
+					stopSlideshow();
+				}
+
+				let mediaEl;
+				if (item.kind === 'image') {
+					mediaEl = document.createElement('img');
+					mediaEl.src = item.url;
+					mediaEl.alt = item.name;
+					const fxClass = resolveFxClass(state.slideshow.effect);
+					mediaEl.className = `viewer-media fx ${fxClass}`;
+				} else {
+					mediaEl = document.createElement('video');
+					mediaEl.src = item.url;
+					mediaEl.controls = true;
+					mediaEl.playsInline = true;
+					mediaEl.preload = 'metadata';
+					mediaEl.className = 'viewer-media';
+				}
+				el.viewerBody.appendChild(mediaEl);
+
+				// Enable/disable nav based on visible items
+				const idx = visible.findIndex((x) => x.id === id);
+				el.prevBtn.disabled = idx <= 0;
+				el.nextBtn.disabled = idx === -1 || idx >= visible.length - 1;
+
+				if (!el.viewer.open) el.viewer.showModal();
+			}
+
+			function initSlideshowCursorFromActive(photos) {
+				if (!photos.length) return;
+				const active = state.items.find((x) => x.id === state.activeId);
+				if (!active || active.kind !== 'image') {
+					state.slideshow.cursor = 0;
+					return;
+				}
+				const idx = photos.findIndex((x) => x.id === active.id);
+				state.slideshow.cursor = idx === -1 ? 0 : idx;
+			}
+
+			function renderSlideshowFrame({ dir = 0, advanceCycle = false } = {}) {
+				const photos = getVisiblePhotos();
+				if (photos.length === 0) return;
+
+				if (!el.viewer.open) {
+					// Ensure viewer is open.
+					openViewer(photos[0].id);
+				}
+
+				if (!Number.isFinite(state.slideshow.cursor)) state.slideshow.cursor = 0;
+				if (state.slideshow.cursor < 0 || state.slideshow.cursor >= photos.length) initSlideshowCursorFromActive(photos);
+
+				const stepBy = state.slideshow.lastGroupCount || 1;
+				if (dir !== 0) state.slideshow.cursor = mod(state.slideshow.cursor + dir * stepBy, photos.length);
+
+				const groupCount = getNextGroupCount(photos.length, advanceCycle);
+				const group = takeWrap(photos, state.slideshow.cursor, groupCount);
+				if (!group.length) return;
+
+				state.activeId = group[0].id;
+				state.slideshow.lastGroupCount = group.length;
+
+				const effect = pickSlideshowEffect();
+
+				// Title/subtitle
+				if (group.length === 1) {
+					el.viewerName.textContent = group[0].name;
+					el.viewerSub.textContent = `Photo • ${formatBytes(group[0].size)} • ${group[0].type || 'unknown type'}`;
+				} else {
+					el.viewerName.textContent = 'Slideshow';
+					el.viewerSub.textContent = `Showing ${group.length} photos • Effect: ${effect === 'kenburns' ? 'Ken Burns' : effect}`;
+				}
+
+				const stage = ensureViewerStage();
+				// Default stage size; refined per single-image aspect ratio.
+				resetStageToMax(stage);
+				const nextFrame = document.createElement('div');
+				nextFrame.className = 'slide-frame';
+				nextFrame.dataset.active = 'false';
+
+				if (group.length === 1) {
+					const img = document.createElement('img');
+					img.className = 'viewer-slide';
+					img.src = group[0].url;
+					img.alt = group[0].name;
+					img.loading = 'eager';
+					img.decoding = 'async';
+					nextFrame.appendChild(img);
+					// Fit stage to the image aspect ratio to avoid letterbox gaps.
+					if (img.decode) {
+						img.decode().then(() => setStageToImage(stage, img)).catch(() => {});
+					} else {
+						img.addEventListener('load', () => setStageToImage(stage, img), { once: true });
+					}
+				} else {
+					// For collages, keep a large consistent stage.
+					resetStageToMax(stage);
+					const collage = document.createElement('div');
+					collage.className = 'viewer-collage';
+					collage.dataset.layout = pickCollageLayoutKey(group.length);
+					for (const photo of group) {
+						const tile = document.createElement('div');
+						tile.className = 'tile';
+						tile.style.setProperty('--tile-bg', `url("${photo.url}")`);
+
+						const img = document.createElement('img');
+						img.className = 'tile-media';
+						img.src = photo.url;
+						img.alt = photo.name;
+						img.loading = 'eager';
+						img.decoding = 'async';
+						tile.appendChild(img);
+						collage.appendChild(tile);
+					}
+					nextFrame.appendChild(collage);
+				}
+
+				transitionFrames(stage, nextFrame, effect);
+
+				// While playing, nav steps by groups rather than single items.
+				el.prevBtn.disabled = photos.length <= 1;
+				el.nextBtn.disabled = photos.length <= 1;
+			}
+
+			function closeViewer() {
+				if (el.viewer.open) el.viewer.close();
+				state.activeId = null;
+				el.viewerBody.innerHTML = '';
+				stopSlideshow();
+			}
+
+			function stepViewer(dir) {
+				const visible = getVisibleItems();
+				if (!state.activeId) return;
+				const idx = visible.findIndex((x) => x.id === state.activeId);
+				if (idx === -1) return;
+				const nextIdx = idx + dir;
+				if (nextIdx < 0 || nextIdx >= visible.length) return;
+				openViewer(visible[nextIdx].id);
+			}
+
+			function updatePlayUi() {
+				const playing = state.slideshow.playing;
+				el.playBtn.textContent = playing ? 'Pause' : 'Play';
+				el.playBtn.setAttribute('aria-pressed', String(playing));
+			}
+
+			function updateMusicUi() {
+				const hasTrack = Boolean(state.music.objectUrl);
+				const isPlaying = hasTrack && !el.bgAudio.paused;
+				if (el.musicToggleBtn) {
+					el.musicToggleBtn.disabled = !hasTrack;
+					el.musicToggleBtn.textContent = !hasTrack ? 'Music Off' : isPlaying ? 'Music On' : 'Music Paused';
+					el.musicToggleBtn.setAttribute('aria-pressed', String(isPlaying));
+				}
+				if (el.musicVol) el.musicVol.disabled = !hasTrack;
+			}
+
+			function setMusicFromFile(file) {
+				if (!file) return;
+				if (state.music.objectUrl) URL.revokeObjectURL(state.music.objectUrl);
+				const url = URL.createObjectURL(file);
+				state.music.objectUrl = url;
+				state.music.enabled = true;
+				state.music.name = file.name || 'Music';
+				el.bgAudio.src = url;
+				el.bgAudio.loop = true;
+				el.bgAudio.volume = Math.max(0, Math.min(1, state.music.volume || 0.6));
+				updateMusicUi();
+			}
+
+			function tryPlayMusic() {
+				if (!state.music.enabled) return;
+				if (!state.music.objectUrl) return;
+				el.bgAudio.volume = Math.max(0, Math.min(1, state.music.volume || 0.6));
+				el.bgAudio.play().then(updateMusicUi).catch(() => {
+					// Autoplay can be blocked until a user gesture.
+					updateMusicUi();
+				});
+			}
+
+			function pauseMusic() {
+				if (!el.bgAudio) return;
+				if (!el.bgAudio.paused) el.bgAudio.pause();
+				updateMusicUi();
+			}
+
+			function toggleMusic() {
+				if (!state.music.objectUrl) return;
+				if (el.bgAudio.paused) tryPlayMusic();
+				else pauseMusic();
+			}
+
+			function stopSlideshow() {
+				if (state.slideshow.timer) {
+					clearInterval(state.slideshow.timer);
+					state.slideshow.timer = null;
+				}
+				state.slideshow.playing = false;
+				updatePlayUi();
+				pauseMusic();
+			}
+
+			function stepSlideshow(dir) {
+				// dir: -1 prev group, +1 next group
+				renderSlideshowFrame({ dir, advanceCycle: true });
+			}
+
+			function startSlideshow() {
+				const photos = getVisiblePhotos();
+				if (photos.length === 0) return;
+
+				// Fully automatic slideshow (no manual setup needed)
+				if (state.slideshow.autoMode) {
+					state.slideshow.effect = 'auto';
+					state.slideshow.layoutMode = 'smart';
+					if (el.effectSelect) {
+						el.effectSelect.value = 'auto';
+						el.effectSelect.disabled = true;
+					}
+					if (el.layoutSelect) {
+						el.layoutSelect.value = 'smart';
+						el.layoutSelect.disabled = true;
+					}
+				}
+
+				// Initialize slideshow cursor from current active photo (or start).
+				initSlideshowCursorFromActive(photos);
+				state.slideshow.cycleStep = 0;
+				state.slideshow.layoutSeqStep = 0;
+				state.slideshow.lastGroupCount = 1;
+				state.slideshow.effectHistory = ['fade', 'zoom'];
+				state.slideshow.effectBag = [];
+				state.slideshow.effectOrderIndex = 0;
+				state.slideshow.lastLayoutKey = 'one';
+
+				// Ensure viewer is open
+				if (!el.viewer.open) openViewer(photos[0].id);
+
+				if (state.slideshow.timer) clearInterval(state.slideshow.timer);
+				state.slideshow.playing = true;
+				updatePlayUi();
+				tryPlayMusic();
+				// Render first frame immediately (and advance cycle for next frame)
+				renderSlideshowFrame({ dir: 0, advanceCycle: true });
+				state.slideshow.timer = setInterval(() => {
+					// Only advance while viewer is open
+					if (!el.viewer.open) {
+						stopSlideshow();
+						return;
+					}
+
+					const livePhotos = getVisiblePhotos();
+					if (livePhotos.length === 0) {
+						stopSlideshow();
+						return;
+					}
+					if (state.slideshow.cursor < 0 || state.slideshow.cursor >= livePhotos.length) initSlideshowCursorFromActive(livePhotos);
+
+					// Advance cursor by the previous frame's group size, then change layout count (if cycling)
+					state.slideshow.cursor = mod(state.slideshow.cursor + (state.slideshow.lastGroupCount || 1), livePhotos.length);
+					renderSlideshowFrame({ dir: 0, advanceCycle: true });
+				}, state.slideshow.intervalMs);
+			}
+
+			function toggleSlideshow() {
+				if (state.slideshow.playing) stopSlideshow();
+				else startSlideshow();
+			}
+
+			function downloadActive() {
+				if (!state.activeId) return;
+				const item = state.items.find((x) => x.id === state.activeId);
+				if (!item) return;
+
+				const a = document.createElement('a');
+				a.href = item.url;
+				a.download = item.name || (item.kind === 'image' ? 'photo' : 'video');
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+			}
+
+			function pressGroup(buttons, activeBtn) {
+				for (const b of buttons) b.setAttribute('aria-pressed', String(b === activeBtn));
+			}
+
+			// Filter pills
+			el.filterPills.forEach((btn) => {
+				btn.addEventListener('click', () => {
+					state.filter = btn.dataset.filter;
+					pressGroup(el.filterPills, btn);
+					render();
+					if (state.activeId) {
+						const stillVisible = getVisibleItems().some((x) => x.id === state.activeId);
+						if (!stillVisible) closeViewer();
+						else openViewer(state.activeId);
+					}
+				});
+			});
+
+			// Layout pills
+			el.layoutPills.forEach((btn) => {
+				btn.addEventListener('click', () => {
+					state.layout = btn.dataset.layout;
+					pressGroup(el.layoutPills, btn);
+					render();
+				});
+			});
+
+			// Style pills
+			el.stylePills.forEach((btn) => {
+				btn.addEventListener('click', () => {
+					state.styleMode = btn.dataset.style;
+					pressGroup(el.stylePills, btn);
+					render();
+				});
+			});
+
+			// Search
+			el.search.addEventListener('input', () => {
+				state.query = el.search.value;
+				render();
+				if (state.activeId) {
+					const stillVisible = getVisibleItems().some((x) => x.id === state.activeId);
+					if (!stillVisible) closeViewer();
+					else openViewer(state.activeId);
+				}
+			});
+
+			// Add files
+			el.addBtn.addEventListener('click', () => el.file.click());
+			el.file.addEventListener('change', () => {
+				addFiles(el.file.files);
+				el.file.value = '';
+			});
+
+			// Drag/drop
+			function setDrag(active) {
+				el.drop.classList.toggle('drag', active);
+			}
+			;['dragenter', 'dragover'].forEach((type) => {
+				el.drop.addEventListener(type, (e) => {
+					e.preventDefault();
+					setDrag(true);
+				});
+			});
+			;['dragleave', 'drop'].forEach((type) => {
+				el.drop.addEventListener(type, (e) => {
+					e.preventDefault();
+					setDrag(false);
+				});
+			});
+			el.drop.addEventListener('drop', (e) => {
+				const dt = e.dataTransfer;
+				if (!dt) return;
+				addFiles(dt.files);
+			});
+
+			// Clear
+			el.clearBtn.addEventListener('click', () => {
+				if (state.items.length === 0) return;
+				const ok = confirm('Remove all photos/videos from this page?');
+				if (ok) clearAll();
+			});
+
+			// Start slideshow from gallery
+			el.slideshowBtn.addEventListener('click', () => {
+				const photos = getVisiblePhotos();
+				if (photos.length === 0) {
+					alert('No photos are visible to start a slideshow.');
+					return;
+				}
+				openViewer(photos[0].id);
+				startSlideshow();
+			});
+
+			// Demo items (no external assets; generates simple SVG images)
+			el.demoBtn.addEventListener('click', () => {
+				const mkSvg = (label, a, b) => {
+					const svg = `\n<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">\n  <defs>\n    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">\n      <stop offset="0" stop-color="${a}"/>\n      <stop offset="1" stop-color="${b}"/>\n    </linearGradient>\n  </defs>\n  <rect width="100%" height="100%" fill="url(#g)"/>\n  <circle cx="940" cy="220" r="120" fill="rgba(255,255,255,0.18)"/>\n  <circle cx="980" cy="280" r="170" fill="rgba(0,0,0,0.10)"/>\n  <text x="60" y="120" font-size="64" font-family="ui-sans-serif,system-ui" fill="rgba(255,255,255,0.92)">${label}</text>\n  <text x="60" y="180" font-size="26" font-family="ui-sans-serif,system-ui" fill="rgba(255,255,255,0.74)">Demo photo (SVG)</text>\n</svg>`;
+					return new Blob([svg], { type: 'image/svg+xml' });
+				};
+
+				const demoFiles = [
+					new File([mkSvg('Sunset', '#8b5cf6', '#22c55e')], 'demo-sunset.svg', { type: 'image/svg+xml' }),
+					new File([mkSvg('City', '#0ea5e9', '#8b5cf6')], 'demo-city.svg', { type: 'image/svg+xml' }),
+					new File([mkSvg('Mountains', '#22c55e', '#0b1020')], 'demo-mountains.svg', { type: 'image/svg+xml' }),
+					new File([mkSvg('Flowers', '#fb7185', '#a78bfa')], 'demo-flowers.svg', { type: 'image/svg+xml' }),
+					new File([mkSvg('Ocean', '#38bdf8', '#22c55e')], 'demo-ocean.svg', { type: 'image/svg+xml' }),
+				];
+				addFiles(demoFiles);
+			});
+
+			// Shuffle styles
+			el.shuffleBtn.addEventListener('click', () => {
+				for (const item of state.items) item.style = pickStyle();
+				render();
+			});
+
+			// Jumble pattern layout
+			el.jumbleBtn.addEventListener('click', () => {
+				state.pattern.seed = (state.pattern.seed + 1 + Math.floor(Math.random() * 100000)) >>> 0;
+				if (state.layout !== 'pattern') {
+					const btn = el.layoutPills.find((b) => b.dataset.layout === 'pattern');
+					if (btn) {
+						state.layout = 'pattern';
+						pressGroup(el.layoutPills, btn);
+					}
+				}
+				render();
+			});
+
+			window.addEventListener('resize', () => {
+				if (state.layout === 'pattern') render();
+				if (el.viewer.open && state.slideshow.playing) {
+					renderSlideshowFrame({ dir: 0, advanceCycle: false });
+				}
+			});
+
+			// Viewer controls
+			el.closeBtn.addEventListener('click', closeViewer);
+			el.prevBtn.addEventListener('click', () => (state.slideshow.playing ? stepSlideshow(-1) : stepViewer(-1)));
+			el.nextBtn.addEventListener('click', () => (state.slideshow.playing ? stepSlideshow(1) : stepViewer(1)));
+			el.downloadBtn.addEventListener('click', downloadActive);
+
+			el.playBtn.addEventListener('click', toggleSlideshow);
+			if (el.musicBtn && el.musicFile) {
+				el.musicBtn.addEventListener('click', () => el.musicFile.click());
+				el.musicFile.addEventListener('change', () => {
+					const file = el.musicFile.files && el.musicFile.files[0];
+					if (!file) return;
+					setMusicFromFile(file);
+					// If slideshow is currently playing, start music immediately.
+					if (state.slideshow.playing && el.viewer.open) tryPlayMusic();
+				});
+			}
+			if (el.musicToggleBtn) el.musicToggleBtn.addEventListener('click', toggleMusic);
+			if (el.musicVol) {
+				el.musicVol.addEventListener('input', () => {
+					state.music.volume = Number(el.musicVol.value);
+					el.bgAudio.volume = Math.max(0, Math.min(1, state.music.volume || 0.6));
+				});
+			}
+			el.speedSelect.addEventListener('change', () => {
+				state.slideshow.intervalMs = Number(el.speedSelect.value) || 3000;
+				if (state.slideshow.playing) startSlideshow();
+			});
+			el.layoutSelect.addEventListener('change', () => {
+				if (state.slideshow.autoMode) {
+					el.layoutSelect.value = 'cycle';
+					return;
+				}
+				state.slideshow.layoutMode = el.layoutSelect.value || 'single';
+				state.slideshow.cycleStep = 0;
+				state.slideshow.lastGroupCount = 1;
+				if (el.viewer.open && state.slideshow.playing) renderSlideshowFrame({ dir: 0, advanceCycle: false });
+			});
+			el.effectSelect.addEventListener('change', () => {
+				if (state.slideshow.autoMode) {
+					el.effectSelect.value = 'auto';
+					return;
+				}
+				state.slideshow.effect = el.effectSelect.value || 'fade';
+				if (el.viewer.open && state.slideshow.playing) renderSlideshowFrame({ dir: 0, advanceCycle: false });
+				else if (state.activeId) openViewer(state.activeId);
+			});
+
+			el.viewer.addEventListener('click', (e) => {
+				// Click outside the dialog content to close
+				const rect = el.viewer.querySelector('.viewer').getBoundingClientRect();
+				const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+				if (!inside) closeViewer();
+			});
+
+			el.viewer.addEventListener('close', () => {
+				// Handles Esc key close and other implicit closes.
+				state.activeId = null;
+				el.viewerBody.innerHTML = '';
+				stopSlideshow();
+				pauseMusic();
+			});
+
+			window.addEventListener('keydown', (e) => {
+				if (!el.viewer.open) return;
+				if (e.key === 'Escape') return; // dialog handles
+				if (e.key.toLowerCase && e.key.toLowerCase() === 'p') {
+					e.preventDefault();
+					toggleSlideshow();
+					return;
+				}
+				if (e.key.toLowerCase && e.key.toLowerCase() === 'm') {
+					e.preventDefault();
+					toggleMusic();
+					return;
+				}
+				if (e.key === 'ArrowLeft') {
+					e.preventDefault();
+					if (state.slideshow.playing) stepSlideshow(-1);
+					else stepViewer(-1);
+				}
+				if (e.key === 'ArrowRight') {
+					e.preventDefault();
+					if (state.slideshow.playing) stepSlideshow(1);
+					else stepViewer(1);
+				}
+			});
+
+			// Initial render
+			// Default to automatic slideshow behavior (no manual user setup)
+			if (el.layoutSelect) {
+				el.layoutSelect.value = 'smart';
+				el.layoutSelect.disabled = true;
+			}
+			if (el.effectSelect) {
+				el.effectSelect.value = 'auto';
+				el.effectSelect.disabled = true;
+			}
+			updatePlayUi();
+			updateMusicUi();
+			// Show a friendlier first-load message while we try to auto-load hosted photos.
+			if (el.empty) el.empty.textContent = 'Loading your gallery…';
+			render();
+			loadDefaultGalleryJson().finally(() => {
+				if (state.items.length === 0 && el.empty) {
+					el.empty.textContent = 'No media yet. Add photos/videos to start building your gallery.';
+				}
+			});
+		</script>
+	</body>
+</html>

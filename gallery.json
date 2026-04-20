@@ -1,0 +1,10 @@
+{
+  "title": "Swarupa's Gallery",
+  "items": [
+    {
+      "kind": "image",
+      "name": "Example (SVG) — replace with real photos",
+      "url": "media/example.svg"
+    }
+  ]
+}
